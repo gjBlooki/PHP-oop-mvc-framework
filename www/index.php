@@ -1,33 +1,50 @@
 <?php
+try {	
+	
 
-function myAutoLoader(string $className)
-{
-    $className = str_replace('\\', '/', $className);
-    require_once __DIR__ . '/../src/' . $className . '.php';
+	function myAutoLoader(string $className)
+	{
+	    $className = str_replace('\\', '/', $className);
+	    //var_dump($className);
+	    require_once __DIR__ . '/../src/' . $className . '.php';
+	}
+	spl_autoload_register('myAutoLoader');	
+
+	$route = $_GET['route'] ?? '';
+	$routes = require __DIR__ . '/../src/routes.php';	
+
+	$isRouteFound = false;
+	foreach ($routes as $pattern => $controllerAndAction) {
+	    preg_match($pattern, $route, $matches);
+	    if (!empty($matches)) {
+	        $isRouteFound = true;
+	        break;
+	    }
+	}	
+
+	if (!$isRouteFound) {
+		throw new \MyProject\Exceptions\NotFoundException();
+	}	
+
+	unset($matches[0]);	
+	
+
+	$controllerName = $controllerAndAction[0];
+	$controllerAction = $controllerAndAction[1];	
+
+	$controller = new $controllerName();
+	$controller->$controllerAction(...$matches);
+
+} catch (\MyProject\Exceptions\DbException $e) {
+	$view = new \MyProject\View\View(__DIR__ . '/../src/MyProject/templates/errors');
+	$view->renderHtml('500.php', ['error' => $e->getMessage()], 500);
+} catch (\MyProject\Exceptions\NotFoundException $e) {
+	$view = new \MyProject\View\View(__DIR__ . '/../src/MyProject/templates/errors');
+	$view->renderHtml('404.php', ['error' => $e->getMessage()], 404);
+} catch(\MyProject\Exceptions\UnauthorizedException $e) {
+	$view = new \MyProject\View\View(__DIR__ . '/../src/MyProject/templates/errors');
+	$view->renderHtml('401.php', ['error' => $e->getMessage()], 401);
+} catch (\MyProject\Exceptions\Forbidden $e) {
+	$view = new \MyProject\View\View(__DIR__ . '/../src/MyProject/templates/errors');
+	$view->renderHtml('403.php', [], 403);
 }
-spl_autoload_register('myAutoLoader');
-
-$route = $_GET['route'] ?? '';
-$routes = require __DIR__ . '/../src/routes.php';
-
-$isRouteFound = false;
-foreach ($routes as $pattern => $controllerAndAction) {
-    preg_match($pattern, $route, $matches);
-    if (!empty($matches)) {
-        $isRouteFound = true;
-        break;
-    }
-}
-
-if (!$isRouteFound) {
-    echo 'Страница не найдена';
-    return;
-}
-
-unset($matches[0]);
-
-$controllerName = $controllerAndAction[0];
-$controllerAction = $controllerAndAction[1];
-
-$controller = new $controllerName();
-$controller->$controllerAction(...$matches);

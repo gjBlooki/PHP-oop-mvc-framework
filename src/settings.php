@@ -2,9 +2,9 @@
 
 return [
     
-        'host' => 'localhost',
-        'dbname' => 'MyProject',
-        'user' => 'root',
-        'password' => 'serviy_007'
+        'host' => 'DB_host',
+        'dbname' => 'DB_name',
+        'user' => 'DB_user',
+        'password' => 'DB_password'
     
 ];
